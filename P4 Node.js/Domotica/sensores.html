@@ -1,0 +1,215 @@
+<html>
+<script src="/socket.io/socket.io.js"></script>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300&display=swap" rel="stylesheet">
+    <title>Sistema Domótico</title>
+</head>
+<body style="font-family: 'Nunito', sans-serif; background-color: #161b22; text-align: center; margin-top: 3%; color: whitesmoke;">
+<h1>Sensores</h1>
+<a style="decoration: none;" href="usuario.html">Página de usuario</a>
+<hr size="1" width="50%" color="#21262d">
+<h3>Temperatura (ºC)</h3>
+<form             style="
+    font-family: 'Nunito', sans-serif;" action="javascript:void(0);" onsubmit="actualizarTemperatura();">
+
+    <input type="label" id="temperatura"
+           style="
+    text-align: center;
+    padding: 6px 16px;
+    border-radius: 980px;
+    background: whitesmoke;
+    color: black;"/>
+
+    <br>
+    <br>
+    <input type="submit" value="Actualizar temperatura" />
+</form>
+<hr size="1" width="25%" color="#21262d">
+<h3>Luminosidad (%)</h3>
+<form             style="
+    font-family: 'Nunito', sans-serif;" action="javascript:void(0);" onsubmit="actualizarLuminosidad();">
+
+
+    <input type="label" id="luminosidad"
+           style="
+    text-align: center;
+    padding: 6px 16px;
+    border-radius: 980px;
+    background: whitesmoke;
+    color: black;"/>
+    <br>
+    <br>
+    <input type="submit" value="Actualizar luminosidad" />
+</form>
+<hr size="1" width="25%" color="#21262d">
+<h3>Gasto energético (Kwh/día)</h3>
+<form             style="
+    font-family: 'Nunito', sans-serif;" action="javascript:void(0);" onsubmit="actualizarEnergia();">
+
+    <input type="label" id="energia"
+           style="
+    text-align: center;
+    padding: 6px 16px;
+    border-radius: 980px;
+    background: whitesmoke;
+    color: black;"/>
+
+    <br>
+    <br>
+    <input type="submit" value="Actualizar gasto energetico" />
+</form>
+<hr size="1" width="50%" color="#21262d">
+<h2>Sensores</h2>
+<p id="infoSensores"></p>
+<hr size="1" width="25%" color="#21262d">
+<h2>Interruptores</h2>
+<h4 id="AC">
+</h4>
+
+<h4 id="Persiana">
+</h4>
+<h4 id="EnergiaInt">
+</h4>
+<hr size="1" width="50%" color="#21262d">
+<h3>Registro de eventos:</h3>
+<div id="eventos"></div>
+<form onclick="borrarRegistros()">
+    <input
+            style="
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    text-align: center;
+    padding: 6px 16px;
+    border-radius: 980px;
+    background: whitesmoke;
+    color: black;
+"
+            type="button" value="Borrar Registros">
+    </input>
+</form>
+<h3>Alarmas</h3>
+<div id="alarmas"></div>
+<hr size="1" width="50%" color="#21262d">
+
+<form action="javascript:void(0);" onsubmit="enviarEmail();">
+    <h4>Direccion de correo electronico: </h4>
+    <input type="email" id="correo"
+           style="
+    text-align: center;
+    padding: 6px 16px;
+    border-radius: 980px;
+    background: whitesmoke;
+    color: black;"/>
+    <br>
+    <br>
+    <input
+            style="
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    text-align: center;
+    padding: 6px 16px;
+    border-radius: 980px;
+    background: whitesmoke;
+    color: black;
+"
+            type="submit" value="Enviar email del estado de la casa">
+    </input>
+</form>
+<h2 id="confirmacioncorreo"></h2>
+</body>
+
+<script type="text/javascript">
+
+    var serviceURL = document.URL;
+    var socket = io.connect('http://localhost:8080');
+
+    socket.on('data', function(data){
+        ACView(data.estadoAC);
+        persianaView(data.estadoPersiana);
+        sensoresView(data);
+        eventosView(data.eventos);
+        alarmasView(data.alarmasAgente);
+        energiaView(data.modoAhorro);
+    });
+
+    socket.on('correoconf', function(data) {
+        document.getElementById('confirmacioncorreo').innerHTML = data.enviado ? '<b style="color: #7ffd9c;">Enviado con éxito</b>' : '<b style="color: #ff5866;">No se ha podido enviar</b>';
+    });
+
+    function ACView(estado){
+        document.getElementById('AC').innerHTML = 'Aire Acondicionado: '+ (estado ? '<b style="color: #7ffd9c;">Encendido</b>' : '<b style="color: #ff5866;">Apagado</b>');
+    }
+
+    function persianaView(estado){
+        document.getElementById('Persiana').innerHTML = 'Persiana: '+ (estado ? '<b style="color: #7ffd9c;">Subida</b>' : '<b style="color: #ff5866;">Bajada</b>');
+    }
+
+    function energiaView(estado){
+        document.getElementById('EnergiaInt').innerHTML = 'Modo ahorro energético: '+ (estado ? '<b style="color: #7ffd9c;">Activado</b>' : '<b style="color: #ff5866;">Desactivado</b>');
+    }
+
+    function sensoresView(data){
+        document.getElementById('infoSensores').innerHTML = '<p>Temperatura: ' + '<b style="color: #FFF59E;">' + data.temperatura + '</b><br>Luminosidad: ' + '<b style="color: #FFF59E;">' + data.luminosidad +'</b><br>Gasto energético: ' + '<b style="color: #FFF59E;">' + data.energia +'</b><p>';
+    }
+
+    function actualizarTemperatura(){
+        let fecha= new Date();
+        let temp= document.getElementById("temperatura").value;
+        socket.emit('updateTemp', {temperatura: temp, fecha: fecha});
+    }
+
+    function enviarEmail(){
+        let correo= document.getElementById("correo").value;
+        socket.emit('enviarEmail', {correo: correo});
+    }
+
+    function actualizarLuminosidad(){
+        let fecha= new Date();
+        let lum= document.getElementById("luminosidad").value;
+        socket.emit('updateLum', {luminosidad: lum, fecha: fecha});
+    }
+
+    function actualizarEnergia(){
+        let fecha= new Date();
+        let ener= document.getElementById("energia").value;
+        socket.emit('updateEner', {energia: ener, fecha: fecha});
+    }
+
+    function  eventosView(eventos){
+        var listContainer = document.getElementById('eventos');
+        listContainer.innerHTML = '';
+        var listElement = document.createElement('ul');
+        listContainer.appendChild(listElement);
+        var num = eventos.length;
+        for(var i=0; i<num; i++) {
+            var listItem = document.createElement('li');
+            listItem.innerHTML = JSON.stringify(eventos[i]);
+            listElement.appendChild(listItem);
+        }
+    }
+
+    function borrarRegistros(){
+        socket.emit('borrarRegistros', {});
+    }
+
+    function alarmasView(alarmas){
+        var listContainer = document.getElementById('alarmas');
+        listContainer.innerHTML = '';
+        var listElement = document.createElement('ul');
+        listContainer.appendChild(listElement);
+        var num = alarmas.length;
+        for(var i=0; i<num; i++) {
+            var listItem = document.createElement('li');
+            listItem.innerHTML = JSON.stringify(alarmas[i]);
+            listElement.appendChild(listItem);
+        }
+    }
+
+
+
+
+
+</script>
+</html>

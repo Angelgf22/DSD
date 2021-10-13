@@ -1,0 +1,127 @@
+<html>
+<script src="/socket.io/socket.io.js"></script>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300&display=swap" rel="stylesheet">
+    <title>Sistema Domótico</title>
+</head>
+<body style="font-family: 'Nunito', sans-serif; background-color: #161b22; text-align: center; margin-top: 5%; color: whitesmoke;">
+<h1>Pagina de Usuario</h1>
+
+<hr size="1" width="50%" color="#21262d">
+
+
+<form onclick="cambiarEstadoAC()">
+
+    <input
+            style="
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    text-align: center;
+    padding: 6px 16px;
+    border-radius: 980px;
+    background: whitesmoke;
+    color: black;
+"
+           type="button" value="Interruptor AC">
+
+    </input>
+
+</form>
+
+<h4 id="AC">
+</h4>
+
+<hr size="1" width="25%" color="#21262d">
+
+<form onclick="cambiarEstadoPersiana()">
+    <input
+            style="
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    text-align: center;
+    padding: 6px 16px;
+    border-radius: 980px;
+    background: whitesmoke;
+    color: black;
+"
+            type="button" value="Subir/Bajar persiana">
+
+    </input>
+</form>
+
+<h4 id="Persiana">
+</h4>
+
+<hr size="1" width="25%" color="#21262d">
+
+<form onclick="cambiarModoAhorroEnergetico()">
+    <input
+            style="
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    text-align: center;
+    padding: 6px 16px;
+    border-radius: 980px;
+    background: whitesmoke;
+    color: black;
+"
+            type="button" value="Activar/Desactivar ahorro de energia">
+
+    </input>
+</form>
+
+<h4 id="Energia">
+</h4>
+
+<hr size="1" width="50%" color="#21262d">
+
+<h2>Sensores</h2>
+<p id="infoSensores"></p>
+
+<a href="sensores.html">< Atras</a>
+
+</body>
+
+<script type="text/javascript">
+
+    var serviceURL = document.URL;
+    var socket = io.connect('http://localhost:8080');
+
+    socket.on('data', function(data){
+        ACView(data.estadoAC);
+        persianaView(data.estadoPersiana);
+        energiaView(data.modoAhorro);
+        sensoresView(data);
+    });
+
+
+    function ACView(estado){
+        document.getElementById('AC').innerHTML = 'Aire Acondicionado: '+ (estado ? '<b style="color: #7ffd9c;">Encendido</b>' : '<b style="color: #ff5866;">Apagado</b>');
+    }
+
+    function persianaView(estado){
+        document.getElementById('Persiana').innerHTML = 'Persiana: '+ (estado ? '<b style="color: #7ffd9c;">Subida</b>' : '<b style="color: #ff5866;">Bajada</b>');
+    }
+
+    function energiaView(estado){
+        document.getElementById('Energia').innerHTML = 'Modo ahorro energético: '+ (estado ? '<b style="color: #7ffd9c;">Activado</b>' : '<b style="color: #ff5866;">Desactivado</b>');
+    }
+
+    function sensoresView(data){
+        document.getElementById('infoSensores').innerHTML = '<p>Temperatura: ' + '<b style="color: #FFF59E;">' + data.temperatura + '</b><br>Luminosidad: ' + '<b style="color: #FFF59E;">' + data.luminosidad +'</b><br>Gasto energético: ' + '<b style="color: #FFF59E;">' + data.energia +'</b><p>';
+    }
+
+
+
+    function cambiarEstadoAC(){ socket.emit('AC'); }
+
+    function cambiarEstadoPersiana(){ socket.emit('persiana'); }
+
+    function cambiarModoAhorroEnergetico(){ socket.emit('ahorroEnergia'); }
+
+
+
+</script>
+</html>
